@@ -1,0 +1,60 @@
+# personas.yaml — the agent registry.
+#
+# Loaded + validated once at startup by app/lib/registry.py.
+#
+# COMMIT-SAFE: this file holds *references* to secrets (env-var NAMES), never
+# secret values. The actual tokens/secrets live in the process environment
+# (see .env.example), keyed by the *_env names below. That is what lets this
+# file be committed to a public repo while the secrets stay out of git.
+#
+# Keyed on a stable SLUG. `display_name` is a separate, mutable alias —
+# nothing keys on the nickname. Adding the Nth persona is a new entry here
+# plus populating its env vars: zero code change.
+#
+# Per-persona schema:
+#   display_name        human-facing nickname (mutable)
+#   role                "orchestrator" | "worker"
+#   backend             which registered backend handles this persona's events
+#                       (see app/backends/registry.py for the names)
+#   token_env           env-var NAME holding this persona's API token
+#   signing_secret_env  env-var NAME holding this persona's webhook signing secret
+#   capabilities        free-form descriptive list (optional)
+#
+# Routing is by `persona_id` (the in-body routing key selects the persona, which
+# selects its `backend`) or by a `route/<name>` event label mapped to a backend
+# via the WEBHOOK_LABEL_ROUTES env var (see app/config.py). Personas don't claim
+# labels — a label maps straight to a backend, not via a persona.
+#
+# These three are PLACEHOLDERS. They load `available=False` until you set the
+# referenced env vars — that's the two-tier fail-closed design working as
+# intended (the slug + role + backend stay intact so routing is derivable even
+# while the persona can't be dispatched to). Set the env vars to make them live.
+
+personas:
+  responder:
+    display_name: Responder
+    role: worker
+    backend: echo
+    token_env: RESPONDER_API_TOKEN
+    signing_secret_env: RESPONDER_WEBHOOK_SECRET
+    capabilities:
+      - Echoes inbound messages (reference backend)
+
+  logger:
+    display_name: Logger
+    role: worker
+    backend: log
+    token_env: LOGGER_API_TOKEN
+    signing_secret_env: LOGGER_WEBHOOK_SECRET
+    capabilities:
+      - Acknowledges inbound events without side effects
+
+  coordinator:
+    display_name: Coordinator
+    role: orchestrator
+    backend: log
+    token_env: COORDINATOR_API_TOKEN
+    signing_secret_env: COORDINATOR_WEBHOOK_SECRET
+    capabilities:
+      - Webhook intake + routing
+      - Owner of cross-persona handoffs
