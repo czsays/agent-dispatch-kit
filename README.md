@@ -1,5 +1,7 @@
 # agent-dispatch-kit
 
+[![ci](https://github.com/czsays/agent-dispatch-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/czsays/agent-dispatch-kit/actions/workflows/ci.yml)
+
 A small, runnable reference for a **webhook-driven agent dispatch service**:
 verify a signed webhook, normalize it into an event, route that event to a
 pluggable *agent backend*, and run it off an async queue. It runs end-to-end out
